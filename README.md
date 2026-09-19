@@ -15,9 +15,11 @@
 ├── robots.txt              搜索引擎抓取规则
 ├── sitemap.xml             站点地图
 ├── .nojekyll               告诉 GitHub Pages 跳过 Jekyll 处理
+├── README.md               本文件（部署、改内容的说明）
+├── CLAUDE.md               给 Claude Code 用的仓库约定，可忽略
 └── assets/
     ├── css/style.css       全部样式（含设计变量、响应式、打印样式）
-    ├── js/main.js          导航抽屉、滚动动画、导航高亮
+    ├── js/main.js          全部交互（导航抽屉、滚动入场、首屏细网、复制等）
     └── favicon.svg         站点图标
 ```
 
@@ -43,39 +45,39 @@ npx serve .
 
 ---
 
-## 部署到 GitHub Pages
+## 部署
 
-### 第一步：在 GitHub 上新建仓库
+站点已部署在 GitHub Pages 上：
 
-1. 登录 GitHub，点右上角 **+** → **New repository**
-2. **Repository name** 填 `yiquwl` 或 `website`（任意名字，下文以 `website` 为例）
-3. 可见性选 **Public**（免费账号的 Pages 只支持公开仓库）
-4. **不要**勾选 "Add a README file" / .gitignore / license —— 本地已经有了
-5. 点 **Create repository**
+| 项目 | 值 |
+|---|---|
+| 仓库 | <https://github.com/azyyzaz/yiqu-website>（公开） |
+| 访问地址 | <https://azyyzaz.github.io/yiqu-website/> |
+| Pages 源 | 分支 `main`，目录 `/ (root)` |
+| 构建方式 | legacy（`.nojekyll` 已就位，跳过 Jekyll 处理） |
 
-### 第二步：把本地文件推上去
-
-在项目目录下执行（把 `你的用户名` 换成实际的 GitHub 用户名）：
+日常发布只需一条命令，约 1 分钟后自动重建：
 
 ```bash
-git remote add origin https://github.com/你的用户名/website.git
-git branch -M main
-git push -u origin main
+git push origin main
 ```
 
-### 第三步：开启 Pages
+### 如果将来要换仓库或换账号
 
-1. 进入仓库页面 → **Settings**
-2. 左侧菜单拉到 **Pages**
-3. **Source** 选 `Deploy from a branch`
-4. **Branch** 选 `main`，目录选 `/ (root)`，点 **Save**
-5. 等 1–2 分钟，页面顶部会出现访问地址：
+1. 在 GitHub 上新建一个 **Public** 仓库（免费账号的 Pages 只支持公开仓库），
+   建的时候**不要**勾选 "Add a README file" / .gitignore / license —— 本地已经有了
+2. 改指向并推送：
 
-```
-https://你的用户名.github.io/website/
-```
+   ```bash
+   git remote set-url origin https://github.com/新用户名/新仓库名.git
+   git push -u origin main
+   ```
 
-之后每次 `git push`，站点会在 1 分钟左右自动更新。
+3. 仓库页面 → **Settings** → 左侧 **Pages** → **Source** 选 `Deploy from a branch`，
+   分支选 `main`、目录选 `/ (root)`，点 **Save**
+
+> ⚠️ 建 Public 仓库意味着**代码和这个 README 都会公开可见**。README 里提到的
+> 电话、邮箱、备案号等信息，等于也在公网上。
 
 ---
 
@@ -207,7 +209,7 @@ https://你的用户名.github.io/website/
 | 本地预览 | ✅ 已验证（1440px / 768px / 390px 三种宽度无横向溢出） |
 | HTML 结构 | ✅ 已通过解析器校验，标签闭合完整 |
 | 链接完整性 | ✅ 所有锚点、资源路径均已校验 |
-| GitHub 仓库 | ⬜ 待创建 |
-| Pages 已开启 | ⬜ 待开启 |
+| GitHub 仓库 | ✅ 已创建（azyyzaz/yiqu-website，公开） |
+| Pages 已开启 | ✅ 已开启，线上实测通过：首页与全部静态资源均 200，无控制台报错，无 4xx/5xx |
 | 自定义域名 | ⬜ 待绑定 |
-| 内容核对 | ⬜ 见上方「部署前必做」 |
+| 内容核对 | ⬜ 见上方「部署前必做」——**其中备案号一项与当前 github.io 域名冲突，见下** |
