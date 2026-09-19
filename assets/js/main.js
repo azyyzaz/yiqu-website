@@ -253,16 +253,14 @@
       }
 
       /*
-        投影让网看起来离页面有一层空气。线条本身没有体积，必须让投影跟着
-        线的形状走，所以用 canvas 的 shadow 而不是某个矩形底衬。
+        这里不画投影。网格尺寸是给 68px 的间距配的，落到 6.8px 之后
+        16px 的模糊半径横跨两个多格子，相邻线的投影互相盖住，整片糊成
+        一块蓝色底衬——看着像给浮起区域铺了背景色。这个密度下投影已经
+        当不了"单根线的立体感"，索性去掉，只留线条本身。
+
+        浮起靠的是线在弯、加上径向遮罩收边，这两样已经够了。
       */
-      ctx.shadowColor = 'rgba(44, 85, 240, .3)';
-      ctx.shadowOffsetY = 14;
-      ctx.shadowBlur = 16;
       ctx.stroke();
-      ctx.shadowColor = 'transparent';
-      ctx.shadowOffsetY = 0;
-      ctx.shadowBlur = 0;
 
       /*
         柔边。destination-in 只保留遮罩不透明的地方，矩形之外整片被抹掉——
