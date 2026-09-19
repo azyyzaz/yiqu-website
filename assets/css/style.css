@@ -181,6 +181,21 @@ button { font: inherit; color: inherit; }
   background: rgba(255, 255, 255, .92);
 }
 
+/* 阅读进度：宽度由 JS 写入 --progress（0 → 1） */
+.site-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: calc(var(--progress, 0) * 100%);
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), #6d8bff);
+  opacity: 0;
+  transition: opacity .3s var(--ease);
+  pointer-events: none;
+}
+.site-header.is-scrolled::after { opacity: 1; }
+
 .header-inner {
   display: flex;
   align-items: center;
@@ -282,12 +297,19 @@ button { font: inherit; color: inherit; }
   overflow: hidden;
   padding-block: clamp(76px, 11vw, 148px) clamp(64px, 9vw, 120px);
   text-align: center;
+  /* 网线的步距与遮罩只在这里定义一次：::after 的静态网线、上面浮起的
+     细网、以及 JS 里的画线步距全都取自这几个值，改一处即可。
+     细网正好是网线的十分之一，两张网严格嵌套，不会互相错位。 */
+  --grid-size: 68px;
+  --mesh-size: 6.8px;
+  --grid-mask: radial-gradient(60% 55% at 50% 26%, #000 0%, transparent 100%);
 }
 .hero::before {
   content: "";
   position: absolute;
   inset: -20% 0 auto;
   height: 780px;
+  z-index: 0;
   background:
     radial-gradient(52% 62% at 50% 0%, rgba(44, 85, 240, .11), transparent 72%),
     radial-gradient(38% 46% at 82% 26%, rgba(44, 85, 240, .07), transparent 72%),
@@ -298,15 +320,31 @@ button { font: inherit; color: inherit; }
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
   background-image:
     linear-gradient(to right, rgba(13, 17, 23, .035) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(13, 17, 23, .035) 1px, transparent 1px);
-  background-size: 68px 68px;
-  -webkit-mask-image: radial-gradient(60% 55% at 50% 26%, #000 0%, transparent 100%);
-  mask-image: radial-gradient(60% 55% at 50% 26%, #000 0%, transparent 100%);
+  background-size: var(--grid-size) var(--grid-size);
+  -webkit-mask-image: var(--grid-mask);
+  mask-image: var(--grid-mask);
   pointer-events: none;
 }
-.hero-inner { position: relative; z-index: 1; }
+
+/*
+  静态网线之上再叠一张十倍密的细网，指针扫过时被托起一个小穹顶。
+  整张网连同柔边都由 canvas 自己画（见 main.js 第 6 节）：这里只负责定位。
+  不套 --grid-mask——细网本来就跟着指针走、自己会淡出，再叠一道固定遮罩
+  只会把它啃掉一块。
+*/
+.hero-mesh {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.hero-inner { position: relative; z-index: 3; }
 
 .eyebrow {
   display: inline-flex;
@@ -370,7 +408,7 @@ button { font: inherit; color: inherit; }
 .stats {
   padding-block: 56px;
   border-block: 1px solid var(--line);
-  background: var(--bg);
+  background: transparent;   /* body 已是白底，这里不必再铺一层 */
 }
 .stats-grid {
   display: grid;
@@ -639,7 +677,8 @@ button { font: inherit; color: inherit; }
   transition: border-color .22s var(--ease), transform .22s var(--ease),
               box-shadow .22s var(--ease);
 }
-a.contact-card:hover {
+/* 只有可操作（可拨号 / 可发信 / 可复制）的卡片才响应悬浮抬升 */
+.contact-card.is-actionable:hover {
   border-color: #d3dae8;
   transform: translateY(-3px);
   box-shadow: 0 14px 34px -20px rgba(13, 17, 23, .22);
@@ -663,6 +702,58 @@ a.contact-card:hover {
   font-weight: 400;
   line-height: 1.72;
   color: var(--ink-2);
+}
+
+/* 号码 / 邮箱做成链接：移动端点击可直接拨号、发信 */
+.contact-value a {
+  display: inline-block;
+  padding-block: 2px;
+}
+.contact-value a:hover { color: var(--accent); }
+
+/* 复制按钮 */
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 6px 13px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  letter-spacing: .01em;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color .18s var(--ease), border-color .18s var(--ease),
+              background-color .18s var(--ease);
+}
+.copy-btn:hover {
+  color: var(--accent);
+  border-color: rgba(44, 85, 240, .28);
+  background: var(--accent-soft);
+}
+.copy-btn svg { width: 13px; height: 13px; }
+.copy-btn .ico-check { display: none; }
+.copy-btn.is-done {
+  color: var(--accent);
+  border-color: rgba(44, 85, 240, .28);
+  background: var(--accent-soft);
+}
+.copy-btn.is-done .ico-copy { display: none; }
+.copy-btn.is-done .ico-check { display: block; }
+
+/* 仅读屏可见 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
 }
 
 /* ---------- 14. 页脚 ---------- */
@@ -741,7 +832,67 @@ html, body { overflow-x: clip; }
   transform: none;
 }
 
-/* ---------- 16. 响应式 ---------- */
+/* ---------- 16. 层叠基线 ---------- */
+/*
+  正文与页脚各自成一个层叠上下文，首屏那几层（网线、格子）就被关在 main 里面，
+  不会跟顶栏、抽屉这些页面级元素抢层。数值本身没有别的含义。
+*/
+main,
+.site-footer { position: relative; z-index: 1; }
+
+/* ---------- 17. 卡片跟随指针的边框光带 ---------- */
+/*
+  只在精确指针设备上启用：一小段高光沿卡片边框跟着指针走，
+  位置由 JS 写入 --mx / --my。
+  用 mask 的 content-box / border-box 异或把整块渐变裁成 1px 描边，
+  所以卡面本身保持纯净，不会像大面积平涂那样显脏。
+*/
+@media (hover: hover) and (pointer: fine) {
+  .card,
+  .feature,
+  .honor,
+  .contact-card { position: relative; }
+
+  .card::after,
+  .feature::after,
+  .honor::after,
+  .contact-card::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(200px circle at var(--mx, 50%) var(--my, 0%),
+                rgba(44, 85, 240, .6), rgba(44, 85, 240, 0) 60%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity .32s var(--ease);
+    pointer-events: none;
+  }
+
+  .card:hover::after,
+  .feature:hover::after,
+  .honor:hover::after,
+  .contact-card:hover::after { opacity: 1; }
+}
+
+/* ---------- 18. 首屏错峰入场 ---------- */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+.hero-inner > * {
+  animation: rise-in .82s var(--ease) both;
+}
+.hero-inner > *:nth-child(1) { animation-delay: .06s; }
+.hero-inner > *:nth-child(2) { animation-delay: .14s; }
+.hero-inner > *:nth-child(3) { animation-delay: .24s; }
+.hero-inner > *:nth-child(4) { animation-delay: .34s; }
+
+/* ---------- 19. 响应式 ---------- */
 @media (max-width: 1024px) {
   :root { --section-y: 88px; }
 
@@ -814,7 +965,7 @@ html, body { overflow-x: clip; }
   .footer-bottom { flex-direction: column; align-items: flex-start; }
 }
 
-/* ---------- 17. 无障碍与打印 ---------- */
+/* ---------- 20. 无障碍与打印 ---------- */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
@@ -826,7 +977,8 @@ html, body { overflow-x: clip; }
 }
 
 @media print {
-  .site-header, .nav-backdrop, .hero-actions, .site-footer { display: none; }
+  .site-header, .nav-backdrop, .hero-actions, .site-footer,
+  .copy-btn { display: none; }
   body { font-size: 12pt; }
   .section { padding-block: 20pt; }
   .card, .feature, .honor { break-inside: avoid; }
